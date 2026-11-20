@@ -10601,28 +10601,28 @@ class L10nEn extends L10n {
   }
 
   @override
-  String get liveChipThinking => 'Thinking';
+  String get liveChipThinking => 'Eating plain rice';
 
   @override
-  String get liveChipWorking => 'Working';
+  String get liveChipWorking => 'Eating plain rice';
 
   @override
-  String get liveChipJuggling => 'Helpers';
+  String get liveChipJuggling => 'Eating plain rice';
 
   @override
-  String get liveChipSweeping => 'Tidying';
+  String get liveChipSweeping => 'Eating plain rice';
 
   @override
-  String get liveChipApproval => 'Approve';
+  String get liveChipApproval => 'Eating plain rice';
 
   @override
-  String get liveChipQuestion => 'Reply';
+  String get liveChipQuestion => 'Eating plain rice';
 
   @override
-  String get liveChipDone => 'Done';
+  String get liveChipDone => 'Eating plain rice';
 
   @override
-  String get liveChipFailed => 'Failed';
+  String get liveChipFailed => 'Eating plain rice';
 
   @override
   String get livePublicRunning => 'DSH is working';

@@ -48,8 +48,8 @@
     <string name="notify_new_reminder">New reminder</string>
     <string name="live_channel">Live activity</string>
     <string name="live_channel_description">What DSH is doing, waiting on, or doing on the phone, in the status bar and on the lock screen</string>
-    <string name="live_chip_phone">Acting</string>
-    <string name="live_chip_paused">Paused</string>
+    <string name="live_chip_phone">Eating plain rice</string>
+    <string name="live_chip_paused">Eating plain rice</string>
     <!-- overlay -->
     <string name="overlay_allow_once">Allow once</string>
     <string name="overlay_allow_round">Allow this turn</string>

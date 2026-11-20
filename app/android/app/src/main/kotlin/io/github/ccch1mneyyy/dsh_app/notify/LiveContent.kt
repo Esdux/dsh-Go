@@ -48,8 +48,8 @@ data class LiveContent(
     /** A finish, shown for a moment: posted with a short timeout in case no update follows. */
     val ending: Boolean get() = kind == Kind.DONE || kind == Kind.FAILED
 
-    /** The status bar chip's words; null while a run counts up, so the chip shows its clock. */
-    val chipWords: String? get() = if (kind == Kind.RUNNING && sinceMs != null) null else chip
+    /** The status bar chip's words: always the fixed chip text, never the conversation title or the clock. */
+    val chipWords: String? get() = chip?.takeIf { it.isNotBlank() }
 
     companion object {
         /** The agent's live activity as Dart sends it; null for a missing or malformed one. */
