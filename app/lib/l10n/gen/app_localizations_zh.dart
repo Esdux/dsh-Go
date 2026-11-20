@@ -10034,28 +10034,28 @@ class L10nZh extends L10n {
   }
 
   @override
-  String get liveChipThinking => '吃白饭';
+  String get liveChipThinking => '思考中';
 
   @override
-  String get liveChipWorking => '吃白饭';
+  String get liveChipWorking => '干活中';
 
   @override
-  String get liveChipJuggling => '吃白饭';
+  String get liveChipJuggling => '协作中';
 
   @override
-  String get liveChipSweeping => '吃白饭';
+  String get liveChipSweeping => '整理中';
 
   @override
-  String get liveChipApproval => '吃白饭';
+  String get liveChipApproval => '待确认';
 
   @override
-  String get liveChipQuestion => '吃白饭';
+  String get liveChipQuestion => '待回答';
 
   @override
-  String get liveChipDone => '吃白饭';
+  String get liveChipDone => '完成';
 
   @override
-  String get liveChipFailed => '吃白饭';
+  String get liveChipFailed => '出错';
 
   @override
   String get livePublicRunning => 'DSH 正在干活';

@@ -95,6 +95,9 @@ jobs:
           restore-keys: |
             runtime-arm64-
 
+      - name: Generate l10n
+        run: python3 app/tool/l10n_merge.py
+
       - name: Flutter packages
         working-directory: app
         run: |
