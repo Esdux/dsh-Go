@@ -79,55 +79,7 @@ jobs:
           test -n "$sdkm"
           ext=$(find "$FLUTTER_ROOT/packages/flutter_tools/gradle/src/main" -name 'FlutterExtension.*' -print -quit)
           ndk=$(grep -oE 'ndkVersion[^"]*"[0-9.]+"' "$ext" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-          sdk=$(grep -oE 'compileSdkVersion[^0-9]*[0-9]+' "$ext" | grep -oE '[0-9]+
-
-      - name: Cache runtime downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            runtime/.cache
-            runtime/out
-          key: runtime-arm64-${{ hashFiles('runtime/build-runtime.sh', 'runtime/locks/**') }}
-          restore-keys: |
-            runtime-arm64-
-
-      - name: Flutter packages
-        working-directory: app
-        run: |
-          flutter pub get --enforce-lockfile
-          printf 'sdk.dir=%s\nflutter.sdk=%s\n' "$ANDROID_HOME" "$FLUTTER_ROOT" > android/local.properties
-
-      - name: Runtime bundle (arm64-v8a)
-        run: bash runtime/build-runtime.sh arm64-v8a
-
-      - name: Build APK
-        run: |
-          set -euo pipefail
-          base=$(sed -nE 's/^version:[[:space:]]*([0-9][0-9.]*).*/\1/p' app/pubspec.yaml | head -1)
-          name="${INPUT_BUILD_NAME:-${base:-0.0.0}-ci.${GITHUB_SHA::8}}"
-          echo "versionName: $name"
-          bash tooling/build-apk.sh -f arm64 --no-companion --build-name "$name"
-
-      - name: Collect APK
-        run: |
-          set -euo pipefail
-          apk=app/build/app/outputs/flutter-apk/app-arm64-release.apk
-          test -f "$apk"
-          mkdir -p out
-          cp "$apk" "out/dsh-go-${GITHUB_SHA::8}-arm64.apk"
-          ( cd out && sha256sum ./*.apk > SHA256SUMS )
-          ls -l out
-          cat out/SHA256SUMS
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: dsh-go-arm64-${{ github.sha }}
-          path: |
-            out/*.apk
-            out/SHA256SUMS
-          if-no-files-found: error
-          retention-days: 30 | head -1)
+          sdk=$(grep -oE 'compileSdkVersion[^0-9]*[0-9]+' "$ext" | grep -oE '[0-9]+$' | head -1)
           echo "Flutter defaults: compileSdk=$sdk ndk=$ndk"
           yes | "$sdkm" --licenses >/dev/null 2>&1 || true
           "$sdkm" "platform-tools" "platforms;android-$sdk" "build-tools;$sdk.0.0" "ndk;$ndk" "cmake;3.22.1"
