@@ -7,9 +7,8 @@ name: Auto sync and build APK
 
 on:
   schedule:
-    # Daily at 04:00 UTC (12:00 Asia/Shanghai). The gate below keeps the actual
-    # build to at most one per 48 hours.
-    - cron: "0 4 * * *"
+    # Every six hours so the 48-hour gate lands within a few hours of the mark.
+    - cron: "0 0,6,12,18 * * *"
   workflow_dispatch:
     inputs:
       force:
