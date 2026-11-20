@@ -84,6 +84,7 @@ jobs:
           yes | "$sdkm" --licenses >/dev/null 2>&1 || true
           "$sdkm" "platform-tools" "platforms;android-$sdk" "build-tools;$sdk.0.0" "ndk;$ndk" "cmake;3.22.1"
           echo "ANDROID_COMPILE_SDK=$sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
 
       - name: Cache runtime downloads
         uses: actions/cache@v4
