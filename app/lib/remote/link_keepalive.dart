@@ -68,7 +68,10 @@ class LinkKeepAlive extends Notifier<bool> {
   }
 
   void _sync() {
-    final want = !_visible && _connected && _host?.isLocal == false;
+    // The local engine's own DshService already holds the process; one foreground
+    // service is enough.
+    final engine = ref.read(localRuntimeProvider).status.phase == RuntimePhase.running;
+    final want = !_visible && _connected && _host?.isLocal == false && !engine;
     if (want == _running) return;
     _running = want;
     state = want;

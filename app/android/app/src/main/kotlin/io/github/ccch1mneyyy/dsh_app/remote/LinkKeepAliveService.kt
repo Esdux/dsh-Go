@@ -44,7 +44,14 @@ class LinkKeepAliveService : Service() {
             startForeground(ID, notification)
         }
         acquireWakeLock()
-        return START_NOT_STICKY
+        // The system may take the process back; come back only while the app still wants it.
+        return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Swiping the app away means the person is done: no resurrection without the app.
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onDestroy() {
