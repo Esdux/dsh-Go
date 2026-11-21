@@ -51,7 +51,7 @@ class LinkKeepAlive extends Notifier<bool> {
       if (!host.isLocal) {
         // A fresh subscription emits the link's current status immediately.
         ref.listen(hostLinkStatusProvider(host), (_, next) {
-          _connected = next.isConnected;
+          _connected = next.valueOrNull?.isConnected ?? false;
           _sync();
         });
       }
