@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
+import '../../remote/link_keepalive.dart';
 import '../../runtime/background_net.dart';
 import '../chat/chat_header.dart';
 import '../settings/background_guide_page.dart';
@@ -34,6 +35,8 @@ class _BackgroundNetHostState extends ConsumerState<BackgroundNetHost> {
   void initState() {
     super.initState();
     // hidden ⇄ shown: Home, the recents switcher, another app on top. Not the notification shade.
+    // Starts the remote-link keep-alive service on the way out (remote/link_keepalive.dart).
+    ref.read(linkKeepAliveProvider);
     _lifecycle = AppLifecycleListener(
       onHide: () => _controller.setVisible(false),
       onShow: () => _controller.setVisible(true),

@@ -11,10 +11,12 @@ import android.os.PowerManager
 import android.os.Handler
 import android.os.Looper
 import io.github.ccch1mneyyy.dsh_app.phone.DiagnosticsTool
+import io.github.ccch1mneyyy.dsh_app.remote.LinkKeepAliveService
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import android.provider.Settings
+import io.github.ccch1mneyyy.dsh_app.remote.LinkKeepAliveService
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -106,6 +108,20 @@ class RuntimePlugin :
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "getStatus" -> result.success(controller.status())
+            "startLinkKeepAlive" -> {
+                try {
+                    LinkKeepAliveService.start(appContext)
+                    result.success(true)
+                } catch (_: Exception) {
+                    // Android can refuse a background start with too little grace left;
+                    // the link then simply behaves as it did before.
+                    result.success(false)
+                }
+            }
+            "stopLinkKeepAlive" -> {
+                LinkKeepAliveService.stop(appContext)
+                result.success(true)
+            }
             "publishDiagnostics" -> {
                 val markdown = call.argument<String>("markdown")
                 val manual = call.argument<Any?>("manual") == true

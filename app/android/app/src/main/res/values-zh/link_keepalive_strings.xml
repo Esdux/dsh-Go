@@ -1,0 +1,5 @@
+<resources>
+    <!-- The foreground service that keeps a remote session connected in the background. -->
+    <string name="link_keepalive_channel">远程连接</string>
+    <string name="link_keepalive_title">保持远程连接</string>
+</resources>

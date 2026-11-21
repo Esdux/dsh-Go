@@ -256,6 +256,17 @@
                 android:value="Runs the user's local DeepSeek Harness agent server" />
         </service>
 
+        <!-- Keeps the process up while a remote host is connected and the app is in the background
+             (remote/LinkKeepAliveService.kt): no local engine, so no other foreground service. -->
+        <service
+            android:name=".remote.LinkKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the user's remote agent session connected in the background" />
+        </service>
+
         <!-- Keeps the floating pet's process up when only remote hosts are used (pet/PetOverlayService.kt). -->
         <service
             android:name=".pet.PetOverlayService"

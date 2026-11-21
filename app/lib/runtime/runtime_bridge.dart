@@ -687,6 +687,13 @@ class RuntimeBridge {
 
   Future<void> clearFailure() => _methods.invokeMethod<void>('clearFailure');
 
+  /// Keeps the process up while a remote host is connected and the app is in the
+  /// background (Android only). False when the system refused the start.
+  Future<bool> startLinkKeepAlive() async =>
+      await _methods.invokeMethod<bool>('startLinkKeepAlive') ?? false;
+
+  Future<void> stopLinkKeepAlive() => _methods.invokeMethod<void>('stopLinkKeepAlive');
+
   Future<void> setAutoSafe(bool enabled) => _methods.invokeMethod<void>('setAutoSafe', {'enabled': enabled});
 
   /// Selects the local workspace index for subsequent starts. Native code
