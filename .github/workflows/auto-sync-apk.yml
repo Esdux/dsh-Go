@@ -2,7 +2,7 @@
 # builds a fresh arm64 APK at most once every 72 hours.
 #
 # Upstream ships the stock island labels; every merge would otherwise bring them
-# back. tooling/ci-patch-live-chip.py re-applies them, then the usual build runs.
+# back. tooling/ci-patch.py re-applies every local change, then the usual build runs.
 name: Auto sync and build APK
 
 on:
