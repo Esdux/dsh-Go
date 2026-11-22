@@ -1792,19 +1792,6 @@ class ChatController extends Notifier<ChatState> {
     });
   }
 
-  /// The cancel was accepted; let the turn actually end before sending, so the
-  /// next prompt counts as arriving after the stop. Bounded: a stuck stream must
-  /// not hold the composer hostage.
-  Future<void> _awaitTurnEnd(
-    _ChatOperation operation, {
-    Duration timeout = const Duration(seconds: 6),
-  }) async {
-    final deadline = DateTime.now().add(timeout);
-    while (_currentOperation(operation) && state.running && DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-    }
-  }
-
   /// 「正在停止」 is over: the turn ended, or the stop failed ([error]).
   void _endStopping([String? error]) {
     _stopTimeout?.cancel();
