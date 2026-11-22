@@ -157,12 +157,12 @@ def patch_reconnect_chip() -> None:
                  "import '../remote/link_status.dart' show HostLinkPhase;\n"
                  "import 'connection_state.dart' show hostLinkStatusProvider;\n"
                  "import 'hosts_state.dart' show activeHostProvider;\n",
-                 'hostLinkStatusProvider')
+                 "import 'connection_state.dart'")
     insert_after('app/lib/state/live_activity_state.dart',
                  '  final prefs = ref.watch(notifyPrefsProvider);',
                  '  final host = ref.watch(activeHostProvider);\n'
                  '  final link = host.isLocal ? null : ref.watch(hostLinkStatusProvider(host)).value;\n',
-                 'hostLinkStatusProvider(host)')
+                 "import 'connection_state.dart'")
     insert_after('app/lib/state/live_activity_state.dart',
                  '    showFailed: prefs.failed,',
                  '    reconnecting: link?.phase == HostLinkPhase.reconnecting,\n',

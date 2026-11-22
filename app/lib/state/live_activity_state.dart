@@ -14,6 +14,9 @@ import '../remote/link_status.dart' show HostLinkPhase;
 import 'android_features.dart';
 import 'appearance_state.dart';
 import 'notify_state.dart';
+import '../remote/link_status.dart' show HostLinkPhase;
+import 'connection_state.dart' show hostLinkStatusProvider;
+import 'hosts_state.dart' show activeHostProvider;
 
 export '../notify/live_activity.dart';
 

@@ -1418,6 +1418,7 @@ class ChatController extends Notifier<ChatState> {
       if (!_currentOperation(operation)) return retire();
       var promptMode = effective == SendMode.steer ? PromptMode.steer : PromptMode.queue;
       String? stopFailed;
+      final movedOut = <PendingPrompt>[];
       // Interrupt stops first, then sends: DSH keeps the inbox across a stop
       // but only starts the next turn for a prompt that arrives after it (one
       // queued before the stop would wait for whatever is sent next). After
