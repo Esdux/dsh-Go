@@ -163,9 +163,10 @@ def patch_reconnect_chip() -> None:
                  '  final host = ref.watch(activeHostProvider);\n'
                  '  final link = host.isLocal ? null : ref.watch(hostLinkStatusProvider(host)).value;\n',
                  'hostLinkStatusProvider(host)')
-    replace_once('app/lib/state/live_activity_state.dart', '    showFailed: prefs.failed,',
-                 '    showFailed: prefs.failed,\n'
-                 '    reconnecting: link?.phase == HostLinkPhase.reconnecting,')
+    insert_after('app/lib/state/live_activity_state.dart',
+                 '    showFailed: prefs.failed,',
+                 '    reconnecting: link?.phase == HostLinkPhase.reconnecting,\n',
+                 'reconnecting: link?.phase')
 
 
 # --- remote link keep-alive ----------------------------------------------------

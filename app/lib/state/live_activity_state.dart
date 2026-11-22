@@ -36,7 +36,6 @@ final liveActivityProvider = Provider<LiveActivity?>((ref) {
     titles: titles,
     showDone: prefs.done,
     showFailed: prefs.failed,
-    reconnecting: link?.phase == HostLinkPhase.reconnecting,
     // A remote link on its way back says so on the island instead of the mood.
     reconnecting: link?.phase == HostLinkPhase.reconnecting,
   );
