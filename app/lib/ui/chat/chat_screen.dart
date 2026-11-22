@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../clipboard/clipboard_image.dart';
 import '../../l10n/l10n.dart';
 import '../../notify/chat_alerts.dart' show approvalText, questionText;
 import '../../runtime/local_footprint.dart' show RuntimeMissing;
@@ -1134,6 +1135,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
       _ => 'png',
     };
     _addDrafts([DraftAttachment.sniff('${appL10n.fileImageName}.$extension', data)]);
+  }
+
+  /// A picture on the system clipboard (screenshot, copied image): into the tray,
+  /// not sent. The reader returns null when the clip holds no picture, which is the
+  /// common case for an ordinary text paste.
+  Future<void> _pasteImageFromClipboard() async {
+    final image = await ref.read(clipboardImageProvider).read();
+    if (!mounted || !ownsDraft()) return;
+    if (image == null) {
+      _toast(appL10n.chatPasteImageEmpty);
+      return;
+    }
+    _addDrafts([
+      DraftAttachment.sniff('${appL10n.fileImageName}.${image.extension}', image.bytes),
+    ]);
   }
 
   void _addDrafts(List<DraftAttachment> picked, {String? problem}) {
@@ -2268,6 +2284,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
                                     voice: _voice,
                                     onKeyEvent: _composerKey,
                                     onContentInserted: connected ? _pasteContent : null,
+                                    onPasteImage: connected ? _pasteImageFromClipboard : null,
                                     onStop: _stop,
                                     hasAttachments: _drafts.isNotEmpty,
                                     leading: AttachButton(onPressed: connected ? _attach : null),

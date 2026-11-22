@@ -74,6 +74,8 @@
   "chatOpenAttachmentFailed": "没能打开附件",
   "chatReadFailed": "读取失败",
   "chatReadImageFailed": "没能读取图片",
+  "chatPasteImage": "粘贴图片",
+  "chatPasteImageEmpty": "剪贴板里没有图片",
   "chatOpenChatFirst": "先打开一个对话",
   "chatTurnCompleted": "这一轮已完成",
   "chatTurnError": "这一轮出错了",

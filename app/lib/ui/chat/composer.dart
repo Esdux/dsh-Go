@@ -63,6 +63,7 @@ class Composer extends StatefulWidget {
     this.waitHint,
     this.modeLabel,
     this.onContentInserted,
+    this.onPasteImage,
     this.maxLines = 6,
     this.hardwareEnterSends = false,
     this.sendWhenEmpty = false,
@@ -71,6 +72,10 @@ class Composer extends StatefulWidget {
 
   final TextEditingController controller;
   final FocusNode? focusNode;
+
+  /// Reads a picture off the system clipboard into the tray; null hides the
+  /// 「粘贴图片」 entry in the field's long-press menu.
+  final Future<void> Function()? onPasteImage;
 
   /// The text field and its attached controls share this tap region.
   final Object groupId;
@@ -479,6 +484,21 @@ class _ComposerState extends State<Composer> with SingleTickerProviderStateMixin
                     ),
                     null => null,
                   },
+                  contextMenuBuilder: widget.onPasteImage == null
+                      ? null
+                      : (menuContext, state) => AdaptiveTextSelectionToolbar.buttonItems(
+                          anchors: state.contextMenuAnchors,
+                          buttonItems: [
+                            ...state.contextMenuButtonItems,
+                            ContextMenuButtonItem(
+                              label: appL10n.chatPasteImage,
+                              onPressed: () {
+                                state.hideToolbar();
+                                unawaited(widget.onPasteImage!());
+                              },
+                            ),
+                          ],
+                        ),
                   readOnly: dictating || phase == VoicePhase.starting,
                   minLines: 1,
                   maxLines: widget.maxLines,

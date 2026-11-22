@@ -43,6 +43,8 @@
   "chatOpenAttachmentFailed": "Couldn’t open attachment",
   "chatReadFailed": "Couldn’t read",
   "chatReadImageFailed": "Couldn’t read image",
+  "chatPasteImage": "Paste image",
+  "chatPasteImageEmpty": "No image on the clipboard",
   "chatOpenChatFirst": "Open a chat first",
   "chatTurnCompleted": "This turn is complete",
   "chatTurnError": "Something went wrong this turn",

@@ -11,6 +11,7 @@ import android.os.PowerManager
 import android.os.Handler
 import android.os.Looper
 import io.github.ccch1mneyyy.dsh_app.phone.DiagnosticsTool
+import io.github.ccch1mneyyy.dsh_app.clipboard.ClipboardImages
 import io.github.ccch1mneyyy.dsh_app.remote.LinkKeepAliveService
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -107,6 +108,8 @@ class RuntimePlugin :
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "getStatus" -> result.success(controller.status())
+            // A copied picture lives behind a content:// URI; the text clipboard cannot see it.
+            "readClipboardImage" -> result.success(ClipboardImages.read(appContext))
             "startLinkKeepAlive" -> {
                 try {
                     LinkKeepAliveService.start(appContext)
