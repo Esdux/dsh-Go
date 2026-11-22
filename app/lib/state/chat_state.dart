@@ -475,6 +475,10 @@ class ChatController extends Notifier<ChatState> {
   Object? _historyRead;
   List<PendingPrompt> _pending = const [];
 
+  /// One delayed re-check after a stop, so a prompt that was still inside its
+  /// grace period does not stay 「插话中」 for ever.
+  bool _sweepScheduled = false;
+
   /// When this device first saw each inbox item it did not send: a waiting
   /// prompt keeps one time across publishes (and so stays equal).
   final _inboxSeen = <String, DateTime>{};
@@ -1189,6 +1193,18 @@ class ChatController extends Notifier<ChatState> {
           else
             p,
       ]);
+      final stranded = _pending.where(
+        (p) => !p.failed && !settled.contains(p.requestId) && !_isMoving(p.requestId),
+      );
+      // Nothing runs and these will never land: look again when the grace
+      // period is over.
+      if (stranded.isNotEmpty && !_sweepScheduled) {
+        _sweepScheduled = true;
+        Future<void>.delayed(const Duration(seconds: 6), () {
+          _sweepScheduled = false;
+          if (ref.mounted) _publish();
+        });
+      }
     }
     if (_withdrawn.isNotEmpty) {
       final inbox = _inboxIds();
@@ -1411,22 +1427,7 @@ class ChatController extends Notifier<ChatState> {
         if (!_currentOperation(operation)) return retire();
         // A prompt sent while the cancel is still travelling is queued before
         // the stop and never starts a turn. Wait for the turn to end first.
-        if (stopped) {
-          await _awaitTurnEnd(operation);
-          // Interjections the cancelled turn had already claimed never landed:
-          // the model never read them and no echo will come. Take them along so
-          // they ride the next turn after the message that starts it.
-          for (final stranded in _pending) {
-            if (stranded.requestId == requestId ||
-                stranded.failed ||
-                stranded.inboxId != null ||
-                _isMoving(stranded.requestId) ||
-                !stranded.resendable) {
-              continue;
-            }
-            movedOut.add(stranded);
-          }
-        }
+        if (stopped) await _awaitTurnEnd(operation);
         if (!stopped) {
           // The turn goes on: the message joins it instead.
           promptMode = PromptMode.steer;
