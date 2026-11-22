@@ -1,5 +1,5 @@
 # Keeps this fork's fork-only chip overrides alive across upstream updates and
-# builds a fresh arm64 APK at most once every 48 hours.
+# builds a fresh arm64 APK at most once every 72 hours.
 #
 # Upstream ships the stock island labels; every merge would otherwise bring them
 # back. tooling/ci-patch-live-chip.py re-applies them, then the usual build runs.
@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: "Build now even if the last build was under 48 hours ago"
+        description: "Build now even if the last build was under 72 hours ago"
         type: boolean
         default: true
 
@@ -109,7 +109,7 @@ jobs:
               decide('yes', 'no previous build')
               raise SystemExit
           age = time.time() - time.mktime(time.strptime(last, '%Y-%m-%dT%H:%M:%SZ'))
-          decide('yes' if age >= 48 * 3600 else 'no', 'last build %.1fh ago' % (age / 3600))
+          decide('yes' if age >= 72 * 3600 else 'no', 'last build %.1fh ago' % (age / 3600))
           PY
 
       - name: Host tools
