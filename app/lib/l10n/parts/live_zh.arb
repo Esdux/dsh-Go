@@ -19,6 +19,7 @@
   "liveChipQuestion": "待回答",
   "liveChipDone": "完成",
   "liveChipFailed": "出错",
+  "liveChipReconnect": "重连…",
   "livePublicRunning": "DSH 正在干活",
   "livePublicWaiting": "DSH 在等你处理",
   "livePublicDone": "DSH 做完了",

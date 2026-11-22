@@ -8,7 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../notify/live_activity.dart';
 import '../pets/pet_signals.dart';
 import '../pets/pet_state.dart';
+import '../remote/link_status.dart' show HostLinkPhase;
 import 'android_features.dart';
+import 'connection_state.dart' show hostLinkStatusProvider;
+import 'hosts_state.dart' show activeHostProvider;
 import 'notify_state.dart';
 
 export '../notify/live_activity.dart';
@@ -23,6 +26,8 @@ final liveActivityProvider = Provider<LiveActivity?>((ref) {
   final titles = ref.watch(_liveTitlesProvider);
   learnLiveTitles(titles, signals.runs, focus: signals.focus);
   final prefs = ref.watch(notifyPrefsProvider);
+  final host = ref.watch(activeHostProvider);
+  final link = host.isLocal ? null : ref.watch(hostLinkStatusProvider(host)).value;
   return liveActivityOf(
     pet: ref.watch(petStateProvider),
     runs: signals.runs,
@@ -31,6 +36,9 @@ final liveActivityProvider = Provider<LiveActivity?>((ref) {
     titles: titles,
     showDone: prefs.done,
     showFailed: prefs.failed,
+    reconnecting: link?.phase == HostLinkPhase.reconnecting,
+    // A remote link on its way back says so on the island instead of the mood.
+    reconnecting: link?.phase == HostLinkPhase.reconnecting,
   );
 });
 

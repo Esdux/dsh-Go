@@ -108,6 +108,7 @@ LiveActivity? liveActivityOf({
   Map<PetTarget, String> titles = const {},
   bool showDone = true,
   bool showFailed = true,
+  bool reconnecting = false,
 }) {
   final l10n = appL10n;
   final roots = {for (final r in runs) PetTarget(r.host, r.root)};
@@ -147,7 +148,7 @@ LiveActivity? liveActivityOf({
     kind: kind,
     title: alertTitle(title),
     text: text,
-    chip: chip,
+    chip: reconnecting ? l10n.liveChipReconnect : chip,
     publicText: publicText,
     mood: pet.state,
     since: kind == LiveKind.running || kind == LiveKind.waiting ? started(target) : null,

@@ -128,6 +128,46 @@ def patch_chip() -> None:
     replace_chip_words()
 
 
+def insert_arb_key(path: str, after_key: str, key: str, value: str) -> None:
+    """Add a key right after another one; the merge only rewrites values it owns."""
+    target = ROOT / path
+    if not target.is_file():
+        print(f'! {path} is missing', file=sys.stderr)
+        return
+    text = read(target)
+    if f'"{key}"' in text:
+        return
+    match = re.search(r'(?m)^\s*"' + re.escape(after_key) + r'"\s*:\s*"[^"]*",?[ \t]*$', text)
+    if match is None:
+        print(f'! {path}: key {after_key} not found', file=sys.stderr)
+        return
+    end = text.find('\n', match.end())
+    write(target, text[:end + 1] + f'  "{key}": "{value}",\n' + text[end + 1:])
+
+
+def patch_reconnect_chip() -> None:
+    """A remote link on its way back says 「重连…」 on the island instead of the mood."""
+    insert_arb_key('app/lib/l10n/parts/live_zh.arb', 'liveChipFailed', 'liveChipReconnect', '重连…')
+    insert_arb_key('app/lib/l10n/parts/live_en.arb', 'liveChipFailed', 'liveChipReconnect', 'Reconnecting…')
+    insert_after('app/lib/notify/live_activity.dart', '  bool showFailed = true,',
+                 '  bool reconnecting = false,\n', 'bool reconnecting = false,')
+    replace_once('app/lib/notify/live_activity.dart', '    chip: chip,',
+                 '    chip: reconnecting ? l10n.liveChipReconnect : chip,')
+    insert_after('app/lib/state/live_activity_state.dart', "import 'notify_state.dart';",
+                 "import '../remote/link_status.dart' show HostLinkPhase;\n"
+                 "import 'connection_state.dart' show hostLinkStatusProvider;\n"
+                 "import 'hosts_state.dart' show activeHostProvider;\n",
+                 'hostLinkStatusProvider')
+    insert_after('app/lib/state/live_activity_state.dart',
+                 '  final prefs = ref.watch(notifyPrefsProvider);',
+                 '  final host = ref.watch(activeHostProvider);\n'
+                 '  final link = host.isLocal ? null : ref.watch(hostLinkStatusProvider(host)).value;\n',
+                 'hostLinkStatusProvider(host)')
+    replace_once('app/lib/state/live_activity_state.dart', '    showFailed: prefs.failed,',
+                 '    showFailed: prefs.failed,\n'
+                 '    reconnecting: link?.phase == HostLinkPhase.reconnecting,')
+
+
 # --- remote link keep-alive ----------------------------------------------------
 
 KEEPALIVE_SERVICE = 'app/android/app/src/main/kotlin/io/github/ccch1mneyyy/dsh_app/remote/LinkKeepAliveService.kt'
@@ -303,6 +343,7 @@ def patch_clipboard() -> None:
 
 def main() -> int:
     patch_chip()
+    patch_reconnect_chip()
     patch_keepalive()
     patch_clipboard()
     print(f'local patches: {EDITS} edit(s)')
