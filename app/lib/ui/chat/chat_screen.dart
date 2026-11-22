@@ -1142,7 +1142,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> with WidgetsBindingObse
   /// common case for an ordinary text paste.
   Future<void> _pasteImageFromClipboard() async {
     final image = await ref.read(clipboardImageProvider).read();
-    if (!mounted || !ownsDraft()) return;
+    if (!mounted) return;
     if (image == null) {
       _toast(appL10n.chatPasteImageEmpty);
       return;
