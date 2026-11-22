@@ -12,7 +12,7 @@
   "liveChipQuestion": "Reply",
   "liveChipDone": "Done",
   "liveChipFailed": "Failed",
-  "liveChipReconnect": "Reconnecting…",
+  "liveChipReconnect": "Reconnecting",
   "livePublicRunning": "DSH is working",
   "livePublicWaiting": "DSH is waiting for you",
   "livePublicDone": "DSH is done",

@@ -147,8 +147,8 @@ def insert_arb_key(path: str, after_key: str, key: str, value: str) -> None:
 
 def patch_reconnect_chip() -> None:
     """A remote link on its way back says 「重连…」 on the island instead of the mood."""
-    insert_arb_key('app/lib/l10n/parts/live_zh.arb', 'liveChipFailed', 'liveChipReconnect', '重连…')
-    insert_arb_key('app/lib/l10n/parts/live_en.arb', 'liveChipFailed', 'liveChipReconnect', 'Reconnecting…')
+    insert_arb_key('app/lib/l10n/parts/live_zh.arb', 'liveChipFailed', 'liveChipReconnect', '重连')
+    insert_arb_key('app/lib/l10n/parts/live_en.arb', 'liveChipFailed', 'liveChipReconnect', 'Reconnecting')
     insert_after('app/lib/notify/live_activity.dart', '  bool showFailed = true,',
                  '  bool reconnecting = false,\n', 'bool reconnecting = false,')
     replace_once('app/lib/notify/live_activity.dart', '    chip: chip,',
