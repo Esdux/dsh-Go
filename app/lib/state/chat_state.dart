@@ -1172,6 +1172,24 @@ class ChatController extends Notifier<ChatState> {
       _stopTimeout?.cancel();
       _stoppingOperation = null;
     }
+    // Nothing is running and nothing is on its way: a prompt that is neither in
+    // the inbox nor echoed any more will never land (a cancelled turn can take
+    // its claimed interjection with it). Mark it failed so it can be resent
+    // instead of sitting there as 「插话中」 for ever.
+    if (!running && _delivering.isEmpty && _pending.isNotEmpty) {
+      final settled = _inboxIds();
+      final now = DateTime.now();
+      _pending = List.unmodifiable([
+        for (final p in _pending)
+          if (!p.failed &&
+              !settled.contains(p.requestId) &&
+              !_isMoving(p.requestId) &&
+              now.difference(p.time) > const Duration(seconds: 5))
+            p.failedAt(_transcript.cursor)
+          else
+            p,
+      ]);
+    }
     if (_withdrawn.isNotEmpty) {
       final inbox = _inboxIds();
       _pending = List.unmodifiable(
@@ -1391,6 +1409,24 @@ class ChatController extends Notifier<ChatState> {
         final stopped = await _stop(operation);
         // Retirement is not a failed cancel: it must never fall back to steer.
         if (!_currentOperation(operation)) return retire();
+        // A prompt sent while the cancel is still travelling is queued before
+        // the stop and never starts a turn. Wait for the turn to end first.
+        if (stopped) {
+          await _awaitTurnEnd(operation);
+          // Interjections the cancelled turn had already claimed never landed:
+          // the model never read them and no echo will come. Take them along so
+          // they ride the next turn after the message that starts it.
+          for (final stranded in _pending) {
+            if (stranded.requestId == requestId ||
+                stranded.failed ||
+                stranded.inboxId != null ||
+                _isMoving(stranded.requestId) ||
+                !stranded.resendable) {
+              continue;
+            }
+            movedOut.add(stranded);
+          }
+        }
         if (!stopped) {
           // The turn goes on: the message joins it instead.
           promptMode = PromptMode.steer;
@@ -1680,6 +1716,19 @@ class ChatController extends Notifier<ChatState> {
         state = state.copyWith(stopping: false);
       }
     });
+  }
+
+  /// The cancel was accepted; let the turn actually end before sending, so the
+  /// next prompt counts as arriving after the stop. Bounded: a stuck stream must
+  /// not hold the composer hostage.
+  Future<void> _awaitTurnEnd(
+    _ChatOperation operation, {
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (_currentOperation(operation) && state.running && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+    }
   }
 
   /// 「正在停止」 is over: the turn ended, or the stop failed ([error]).
