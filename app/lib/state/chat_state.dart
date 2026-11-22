@@ -1377,10 +1377,17 @@ class ChatController extends Notifier<ChatState> {
       if (!_currentOperation(operation)) return retire();
       var promptMode = effective == SendMode.steer ? PromptMode.steer : PromptMode.queue;
       String? stopFailed;
-      // Interrupt stops first, then sends: DSH keeps the inbox across a stop
-      // but only starts the next turn for a prompt that arrives after it (one
-      // queued before the stop would wait for whatever is sent next).
+      final movedOut = <PendingPrompt>[];
+      // Interrupt stops first, then sends: DSH keeps the inbox across a stop but
+      // starts no turn for what was already waiting, and the message sent after
+      // the stop would sit behind those entries. Take them out first; they go
+      // back after the new message has started the next turn.
       if (effective == SendMode.interrupt) {
+        for (final waiting in _waiting()) {
+          if (waiting.slot != InboxSlot.nextTurn || !waiting.resendable) continue;
+          if (!_currentOperation(operation)) return retire();
+          if (await _takeOut(operation, waiting)) movedOut.add(waiting);
+        }
         final stopped = await _stop(operation);
         // Retirement is not a failed cancel: it must never fall back to steer.
         if (!_currentOperation(operation)) return retire();
@@ -1392,6 +1399,8 @@ class ChatController extends Notifier<ChatState> {
             for (final p in _pending) p.requestId == requestId ? p.withMode(SendMode.steer) : p,
           ]);
           state = state.copyWith(pending: _placePending());
+          // The turn goes on: what we took out goes back where it was.
+          if (movedOut.isNotEmpty) await _putBack(operation, movedOut);
         }
       }
       final notice = await _deliver(
@@ -1406,6 +1415,8 @@ class ChatController extends Notifier<ChatState> {
       _sent();
       // Delivered: sent, even if the watch moved on meanwhile (its echo comes on the new one).
       if (!_currentOperation(operation)) return true;
+      // Back in the inbox behind the message that just started the next turn.
+      if (movedOut.isNotEmpty) await _putBack(operation, movedOut);
       state = state.copyWith(error: stopFailed, notice: notice);
       return true;
     } catch (e) {
