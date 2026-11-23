@@ -19,6 +19,7 @@ import '../runtime/runtime_bridge.dart';
 import '../runtime/runtime_state.dart';
 import '../state/connection_state.dart';
 import '../state/hosts_state.dart';
+import 'link_status.dart';
 
 /// Whether the keep-alive service should be running (diagnostics and tests).
 final linkKeepAliveProvider = NotifierProvider<LinkKeepAlive, bool>(LinkKeepAlive.new);
@@ -36,7 +37,7 @@ class LinkKeepAlive extends Notifier<bool> {
   bool build() {
     _lifecycle ??= AppLifecycleListener(
       onHide: () => _setVisible(false),
-      onShow: () => _setVisible(true),
+      onShow: _onShow,
       onDetach: () => unawaited(_stop()),
     );
     ref.onDispose(() {
@@ -61,6 +62,20 @@ class LinkKeepAlive extends Notifier<bool> {
     return _running;
   }
 
+  /// Back in the foreground: a link that was left behind in a frozen process
+  /// (idle sockets, a cancel that never reached the host, a failed probe) has to
+  /// be asked again. The network kick does not cover an idle link, and a failed
+  /// one only when its error says "retryable" — exactly the cases seen after a
+  /// background freeze.
+  void _onShow() {
+    _setVisible(true);
+    final host = ref.read(activeHostProvider);
+    if (host.isLocal) return;
+    final link = ref.read(hostLinkProvider(host));
+    if (link == null) return;
+    if (link.status.phase != HostLinkPhase.connected) link.retry();
+  }
+
   void _setVisible(bool visible) {
     if (_visible == visible) return;
     _visible = visible;
@@ -71,7 +86,10 @@ class LinkKeepAlive extends Notifier<bool> {
     // The local engine's own DshService already holds the process; one foreground
     // service is enough.
     final engine = ref.read(localRuntimeProvider).status.phase == RuntimePhase.running;
-    final want = !_visible && _connected && _host?.isLocal == false && !engine;
+    // Keep the process up whenever a remote host is selected and the app is in
+    // the background: a link that dropped a second ago is exactly the one that
+    // needs the CPU left on to reconnect.
+    final want = !_visible && _host?.isLocal == false && !engine;
     if (want == _running) return;
     _running = want;
     state = want;
