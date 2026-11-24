@@ -1449,7 +1449,7 @@ class ChatController extends Notifier<ChatState> {
           if (movedOut.isNotEmpty) await _putBack(operation, movedOut);
         }
       }
-      final notice = await _deliver(
+      Future<String?> deliver() => _deliver(
         operation,
         body,
         attachments,
@@ -1458,6 +1458,22 @@ class ChatController extends Notifier<ChatState> {
         mode: promptMode,
         deliveryAllowed: deliveryAllowed,
       );
+      String? notice;
+      try {
+        notice = await deliver();
+      } catch (_) {
+        // A prompt sent right after a stop can time out on the way in while the
+        // host is still winding the cancelled turn down. One more try after the
+        // pause usually lands; a second failure is reported as before.
+        if (effective != SendMode.interrupt ||
+            !_currentOperation(operation) ||
+            !ref.mounted) {
+          rethrow;
+        }
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (!_currentOperation(operation)) rethrow;
+        notice = await deliver();
+      }
       _sent();
       // Delivered: sent, even if the watch moved on meanwhile (its echo comes on the new one).
       if (!_currentOperation(operation)) return true;
