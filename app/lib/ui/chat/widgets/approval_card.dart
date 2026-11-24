@@ -137,8 +137,6 @@ class _ApprovalCardState extends State<ApprovalCard> {
                 const SizedBox(height: 8),
                 Text(
                   reason,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(color: dsh.textTertiary),
                 ),
               ],
