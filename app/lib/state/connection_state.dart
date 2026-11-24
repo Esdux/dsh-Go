@@ -245,6 +245,17 @@ final hostLinkProvider = Provider.autoDispose.family<HostLink?, HostRef>((ref, h
 void _observeRemoteLink(Ref ref, HostLink link, HostKind kind) {
   var reachedReady = false;
   void Function(UsageOutcome, {UsageOperation? actual})? settle;
+  // A failed link asks again every five seconds instead of waiting for a tap.
+  // The retry itself goes through the normal open path, so a success or a
+  // user-initiated retry cancels this by leaving the failed phase.
+  Timer? retryTimer;
+  void scheduleRetry() {
+    retryTimer?.cancel();
+    retryTimer = Timer(const Duration(seconds: 5), () {
+      retryTimer = null;
+      if (link.status.phase == HostLinkPhase.failed) link.retry();
+    });
+  }
   final sub = link.statuses.listen((status) {
     switch (status.phase) {
       case HostLinkPhase.connecting:
@@ -256,6 +267,8 @@ void _observeRemoteLink(Ref ref, HostLink link, HostKind kind) {
           (_, true) => UsageOperation.relayReconnect,
         });
       case HostLinkPhase.connected:
+        retryTimer?.cancel();
+        retryTimer = null;
         reachedReady = true;
         settle?.call(UsageOutcome.ready);
         settle = null;
@@ -264,12 +277,14 @@ void _observeRemoteLink(Ref ref, HostLink link, HostKind kind) {
           status.error?.kind == HostLinkErrorKind.hostKeyRejected ? UsageOutcome.cancelled : UsageOutcome.failed,
         );
         settle = null;
+        scheduleRetry();
       case HostLinkPhase.idle:
         settle?.call(UsageOutcome.unknown);
         settle = null;
     }
   });
   ref.onDispose(() {
+    retryTimer?.cancel();
     settle?.call(UsageOutcome.cancelled);
     unawaited(sub.cancel());
   });
