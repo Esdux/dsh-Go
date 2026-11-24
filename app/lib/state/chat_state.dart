@@ -1463,6 +1463,15 @@ class ChatController extends Notifier<ChatState> {
       if (!_currentOperation(operation)) return true;
       // Back in the inbox behind the message that just started the next turn.
       if (movedOut.isNotEmpty) await _putBack(operation, movedOut);
+      // A stop leaves the inbox alone and starts no turn for what it holds, so a
+      // prompt that arrived around the stop can just sit there. Take ours out and
+      // put it back: that is the wake-up the stop key uses too.
+      if (effective == SendMode.interrupt && !state.running) {
+        final mine = _pending.where((p) => p.requestId == requestId && p.inboxId != null).firstOrNull;
+        if (mine != null && await _takeOut(operation, mine)) {
+          await _putBack(operation, [mine]);
+        }
+      }
       state = state.copyWith(error: stopFailed, notice: notice);
       return true;
     } catch (e) {
