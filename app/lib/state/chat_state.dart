@@ -1187,7 +1187,10 @@ class ChatController extends Notifier<ChatState> {
     // the inbox nor echoed any more will never land (a cancelled turn can take
     // its claimed interjection with it). Mark it failed so it can be resent
     // instead of sitting there as 「插话中」 for ever.
-    if (!running && _delivering.isEmpty && _pending.isNotEmpty) {
+    // Only a snapshot that actually carries the inbox can say a prompt never
+    // arrived; without one this would call a slow echo "failed".
+    final inboxKnown = _transcript.projections.has('inbox');
+    if (!running && _delivering.isEmpty && _pending.isNotEmpty && inboxKnown) {
       final settled = _inboxIds();
       final now = DateTime.now();
       _pending = List.unmodifiable([
@@ -1195,7 +1198,7 @@ class ChatController extends Notifier<ChatState> {
           if (!p.failed &&
               !settled.contains(p.requestId) &&
               !_isMoving(p.requestId) &&
-              now.difference(p.time) > const Duration(seconds: 5))
+              now.difference(p.time) > const Duration(seconds: 30))
             p.failedAt(_transcript.cursor)
           else
             p,
@@ -1207,7 +1210,7 @@ class ChatController extends Notifier<ChatState> {
       // period is over.
       if (stranded.isNotEmpty && !_sweepScheduled) {
         _sweepScheduled = true;
-        Future<void>.delayed(const Duration(seconds: 6), () {
+        Future<void>.delayed(const Duration(seconds: 31), () {
           _sweepScheduled = false;
           if (ref.mounted) _publish();
         });
