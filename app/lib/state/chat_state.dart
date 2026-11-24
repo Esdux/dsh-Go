@@ -1485,9 +1485,17 @@ class ChatController extends Notifier<ChatState> {
       // A stop leaves the inbox alone and starts no turn for what it holds, so a
       // prompt that arrived around the stop can just sit there. Take ours out and
       // put it back: that is the wake-up the stop key uses too.
-      if (effective == SendMode.interrupt && !state.running) {
-        final mine = _pending.where((p) => p.requestId == requestId && p.inboxId != null).firstOrNull;
-        if (mine != null && await _takeOut(operation, mine)) {
+      if (effective == SendMode.interrupt) {
+        // prompt() returns before the inbox echo does, so wait for the id that
+        // the wake-up needs instead of checking once and giving up.
+        PendingPrompt? mine;
+        final deadline = DateTime.now().add(const Duration(seconds: 4));
+        while (_currentOperation(operation) && DateTime.now().isBefore(deadline)) {
+          mine = _pending.where((p) => p.requestId == requestId && p.inboxId != null).firstOrNull;
+          if (mine != null) break;
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+        }
+        if (mine != null && !state.running && await _takeOut(operation, mine)) {
           await _putBack(operation, [mine]);
         }
       }
