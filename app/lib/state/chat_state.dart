@@ -479,6 +479,10 @@ class ChatController extends Notifier<ChatState> {
   Object? _historyRead;
   List<PendingPrompt> _pending = const [];
 
+  /// Prompts whose prompt() call returned but whose inbox echo has not arrived
+  /// yet. A snapshot taken in that window must not call them lost.
+  final Map<String, DateTime> _echoGrace = {};
+
   /// One delayed re-check after a stop, so a prompt that was still inside its
   /// grace period does not stay 「插话中」 for ever.
   bool _sweepScheduled = false;
@@ -1241,12 +1245,15 @@ class ChatController extends Notifier<ChatState> {
           if (!prompt.failed &&
               !_isMoving(prompt.requestId) &&
               !inbox.contains(prompt.requestId) &&
-              !_claimedAt.containsKey(prompt.requestId))
+              !_claimedAt.containsKey(prompt.requestId) &&
+              !_echoGrace.containsKey(prompt.requestId) &&
+              !_delivering.contains(prompt.requestId))
             prompt.failedAt(_transcript.cursor)
           else
             prompt,
       ]);
     }
+    _echoGrace.removeWhere((id, _) => !_pending.any((p) => p.requestId == id));
     final pending = _placePending();
     state = ChatState(
       items: items,
@@ -1452,15 +1459,21 @@ class ChatController extends Notifier<ChatState> {
           if (movedOut.isNotEmpty) await _putBack(operation, movedOut);
         }
       }
-      Future<String?> deliver() => _deliver(
-        operation,
-        body,
-        attachments,
-        receipts,
-        requestId: requestId,
-        mode: promptMode,
-        deliveryAllowed: deliveryAllowed,
-      );
+      Future<String?> deliver() async {
+        final sent = await _deliver(
+          operation,
+          body,
+          attachments,
+          receipts,
+          requestId: requestId,
+          mode: promptMode,
+          deliveryAllowed: deliveryAllowed,
+        );
+        // Echoed or not, a returned prompt() must not be called lost by a
+        // snapshot that happens to land before its inbox row does.
+        _echoGrace[requestId] = DateTime.now();
+        return sent;
+      }
       String? notice;
       try {
         notice = await deliver();
