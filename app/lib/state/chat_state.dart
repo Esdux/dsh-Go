@@ -1499,17 +1499,22 @@ class ChatController extends Notifier<ChatState> {
       // prompt that arrived around the stop can just sit there. Take ours out and
       // put it back: that is the wake-up the stop key uses too.
       if (effective == SendMode.interrupt) {
-        // prompt() returns before the inbox echo does, so wait for the id that
-        // the wake-up needs instead of checking once and giving up.
-        PendingPrompt? mine;
-        final deadline = DateTime.now().add(const Duration(seconds: 4));
-        while (_currentOperation(operation) && DateTime.now().isBefore(deadline)) {
-          mine = _pending.where((p) => p.requestId == requestId && p.inboxId != null).firstOrNull;
-          if (mine != null) break;
-          await Future<void>.delayed(const Duration(milliseconds: 150));
-        }
-        if (mine != null && !state.running && await _takeOut(operation, mine)) {
-          await _putBack(operation, [mine]);
+        // A prompt sent right after the cancel can be swallowed by the host: the
+        // request returns, no inbox row and no error follows. Sending it again
+        // under the same request id is what "edit and resend" does by hand, and
+        // DSH dedups on that id, so a duplicate cannot land twice.
+        for (var attempt = 0; attempt < 3; attempt++) {
+          final mine = await _awaitInbox(operation, requestId);
+          if (mine != null) {
+            if (!state.running && await _takeOut(operation, mine)) {
+              await _putBack(operation, [mine]);
+            }
+            break;
+          }
+          if (!_currentOperation(operation) || attempt == 2) break;
+          await Future<void>.delayed(const Duration(seconds: 1));
+          if (!_currentOperation(operation)) break;
+          notice = await deliver();
         }
       }
       state = state.copyWith(error: stopFailed, notice: notice);
@@ -1727,6 +1732,22 @@ class ChatController extends Notifier<ChatState> {
   /// with them staged as files, so the message still lands and tools can
   /// open them, and the returned notice says so. Remote workspace uploads
   /// supply paths instead of receipt IDs.
+  /// Waits for the inbox row a just-delivered prompt gets, or null when none
+  /// arrives in [timeout] (the host swallowed it).
+  Future<PendingPrompt?> _awaitInbox(
+    _ChatOperation operation,
+    String requestId, {
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (_currentOperation(operation) && DateTime.now().isBefore(deadline)) {
+      final mine = _pending.where((p) => p.requestId == requestId && p.inboxId != null).firstOrNull;
+      if (mine != null) return mine;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+    return null;
+  }
+
   Future<String?> _deliver(
     _ChatOperation operation,
     String text,
